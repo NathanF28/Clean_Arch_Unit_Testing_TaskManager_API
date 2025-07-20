@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"task4/models"
-
+	"task6/models"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+
+ 
+
 
 func GetAllTasks() ([]models.Task, error) {
 	var tasks []models.Task
@@ -51,6 +54,7 @@ func GetTaskById(id int) (models.Task, error) {
 func CreateTask(newTask *models.Task) error {
 	// Check for required fields
 	if newTask.ID == 0 || newTask.Title == "" || newTask.Description == "" || newTask.Status == "" || newTask.DueDate.IsZero() {
+		fmt.Println("ooooooo",newTask)
 		return fmt.Errorf("missing required field(s) in newTask")
 	}
 	_, err := TaskCollection.InsertOne(context.TODO(), newTask)
@@ -79,8 +83,11 @@ func UpdateTask(id int, updatedTask *models.Task) error {
 	}
 
 	update := bson.M{"$set": updateFields}
-	_, err := TaskCollection.UpdateOne(context.TODO(), filter, update)
-	return err
+	res, err := TaskCollection.UpdateOne(context.TODO(), filter, update)
+	if res.MatchedCount == 0 || err != nil {
+		return fmt.Errorf("no task found with id %d", id)
+	}
+	return nil
 }
 
 func RemoveTasks(id int) error {

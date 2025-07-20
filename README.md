@@ -1,65 +1,130 @@
-# Task Manager API
 
-A simple RESTful API for managing tasks, built with Go and Gin.
+# Task Management API
 
-## Features
-- Create, read, update, and delete tasks
-- MongoDB storage
-- API documentation in `docs/api_documentation.md`
+## Overview
+This API provides endpoints for managing tasks and users, with authentication and authorization using JWT. Only authenticated users can access protected routes, and only admins can create, update, delete tasks or promote users.
 
-## Getting Started
+## Authentication
+All protected endpoints require a valid JWT token in the `Authorization` header:
 
-### Prerequisites
-- Go 1.24+
+```
+Authorization: Bearer <your_jwt_token>
+```
 
-### Installation
-1. Clone the repository:
-   ```sh
-   git clone <your-repo-url>
-   cd task_manager_api_2
+## Endpoints
+
+### User Management
+
+#### Register User
+- **POST /register**
+- **Request Body:**
+  ```json
+  {
+    "username": "yourusername",
+    "password": "yourpassword"
+  }
+  ```
+- **Response:**
+  - `201 Created` on success
+  - `400 Bad Request` if invalid or password < 8 chars
+
+#### Login User
+- **POST /login**
+- **Request Body:**
+  ```json
+  {
+    "username": "yourusername",
+    "password": "yourpassword"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "token": "<jwt_token>"
+  }
+  ```
+  - Use this token for all protected endpoints.
+
+#### Promote User (Admin Only)
+- **PUT /promote**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:**
+  ```json
+  {
+    "username": "targetuser"
+  }
+  ```
+- **Response:**
+  - `200 OK` on success
+  - `403 Forbidden` if not admin
+
+### Task Management
+
+#### Get All Tasks
+- **GET /tasks**
+- **Headers:** `Authorization: Bearer <jwt_token>`
+- **Response:** List of tasks
+
+#### Get Task by ID
+- **GET /tasks/:id**
+- **Headers:** `Authorization: Bearer <jwt_token>`
+- **Response:** Task object
+
+#### Create Task (Admin Only)
+- **POST /tasks**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:**
+  ```json
+  {
+    "title": "Task Title",
+    "description": "Task Description",
+    "due_date": "2024-08-01T17:00:00Z",
+    "status": "pending"
+  }
+  ```
+- **Response:** Created task
+
+#### Update Task (Admin Only)
+- **PUT /tasks/:id**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:** (same as create)
+- **Response:** Updated task
+
+#### Delete Task (Admin Only)
+- **DELETE /tasks/:id**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Response:** Success message
+
+## Roles
+- **admin:** Can create, update, delete tasks, and promote users.
+- **regular:** Can view tasks.
+
+## Security
+- Passwords are hashed before storage.
+- JWT secret is stored in `.env` (not in version control).
+- All protected endpoints require JWT authentication.
+
+## Setup & Usage
+1. **Clone the repo**
+2. **Create a `.env` file:**
    ```
-2. Install dependencies:
-   ```sh
-   go mod tidy
+   JWT_SECRET=your_super_secret_key
    ```
-
-### Running the API
-1. Start the server:
-   ```sh
+3. **Run the server:**
+   ```
    go run main.go
    ```
-2. The API will be available at `http://localhost:8080/tasks`
+4. **Use Postman or similar tool to test endpoints.**
 
-### API Documentation
-See [`docs/api_documentation.md`](docs/api_documentation.md) for details on endpoints, request/response formats, and examples.
-
-## Project Structure
+## Example Authorization Header
 ```
-├── controllers/      # API endpoint handlers
-├── data/             # In-memory data service
-├── docs/             # Documentation
-├── models/           # Data models
-├── router/           # Route setup
-├── main.go           # Entry point
-├── go.mod            # Go module file
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+## Notes
+- First registered user becomes admin if no users exist.
+- Only admins can promote other users.
+- All errors are returned as JSON with an `error` field.
 
-## Example Task Object (all fields required)
-```
-{
-  "id": 1,
-  "title": "Task Title",
-  "description": "Task Description",
-  "duedate": "2025-07-16T00:00:00Z",
-  "status": "pending"
-}
-```
-
-## MongoDB Notes
-- All data is stored in MongoDB, not in-memory.
-- The `id` field is an integer and must be unique for each task.
-- All fields (`id`, `title`, `description`, `duedate`, `status`) are required when creating a task. If any are missing, the API will return an error.
-
-## License
-MIT
+## Contact
+For questions, contact the maintainer.

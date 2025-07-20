@@ -1,0 +1,33 @@
+# Ignore Go build and module files
+/bin/
+/build/
+*.exe
+*.out
+*.test
+
+# Dependency directories
+vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Coverage files
+*.coverprofile
+coverage.out
+
+# Misc
+*.bak
+*.tmp

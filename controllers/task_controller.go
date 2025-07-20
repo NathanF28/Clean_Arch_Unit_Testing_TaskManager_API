@@ -3,11 +3,29 @@ package controllers
 import (
 	"fmt"
 	"strconv"
-	"task4/data"
-	"task4/models"
+	"task6/data"
+	"task6/models"
 
 	"github.com/gin-gonic/gin"
 )
+
+func PromoteUser(c *gin.Context){
+	var req struct {
+		Username string `json:"username"`
+	}
+ 	if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(400, gin.H{"error": "Invalid request"})
+        return
+    }
+	err := data.PromoteUser(req.Username)
+	if err != nil {
+        c.JSON(404, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, gin.H{"message": "User promoted to admin"})
+}
+
+
 
 func GetTasks(c *gin.Context) {
 	tasks, err := data.GetAllTasks()

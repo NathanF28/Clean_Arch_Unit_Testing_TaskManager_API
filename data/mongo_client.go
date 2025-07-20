@@ -10,6 +10,7 @@ import (
 
 var MongoClient *mongo.Client
 var TaskCollection *mongo.Collection
+var UserCollection *mongo.Collection
 
 func InitMongo() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -23,4 +24,5 @@ func InitMongo() {
 	}
 	MongoClient = client
 	TaskCollection = client.Database("task_manager").Collection("tasks")
+	UserCollection = client.Database("task_manager").Collection("users")
 }

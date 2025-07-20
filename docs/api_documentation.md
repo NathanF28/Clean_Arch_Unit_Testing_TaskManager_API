@@ -1,62 +1,145 @@
 
-# Task Manager API Documentation (MongoDB)
+---
+# Task Management API Documentation
 
+## Overview
+This API provides endpoints for managing tasks and users, with authentication and authorization using JWT. Only authenticated users can access protected routes, and only admins can create, update, delete tasks or promote users.
 
-Base URL: `http://localhost:8080/tasks`
+---
 
-**Note:** All data is stored in MongoDB. The `id` field is an integer and must be unique for each task. All fields are required when creating a task.
+## Authentication
+All protected endpoints require a valid JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <your_jwt_token>
+```
 
 ## Endpoints
 
----
-### 1. Get All Tasks
-**GET** `/tasks`
+### User Management
 
-**Request:**
-- No body required
-
-**Response:**
-- Status: 200 OK
-- Body: Array of Task objects
-
-```
-[
+#### Register User
+- **POST /register**
+- **Request Body:**
+  ```json
   {
-    "id": 1,
+    "username": "yourusername",
+    "password": "yourpassword"
+  }
+  ```
+- **Response:**
+  - `201 Created` on success
+  - `400 Bad Request` if invalid or password < 8 chars
+
+#### Login User
+- **POST /login**
+- **Request Body:**
+  ```json
+  {
+    "username": "yourusername",
+    "password": "yourpassword"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "token": "<jwt_token>"
+  }
+  ```
+  - Use this token for all protected endpoints.
+
+#### Promote User (Admin Only)
+- **PUT /promote**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:**
+  ```json
+  {
+    "username": "targetuser"
+  }
+  ```
+- **Response:**
+  - `200 OK` on success
+  - `403 Forbidden` if not admin
+
+---
+
+### Task Management
+
+#### Get All Tasks
+- **GET /tasks**
+- **Headers:** `Authorization: Bearer <jwt_token>`
+- **Response:** List of tasks
+
+#### Get Task by ID
+- **GET /tasks/:id**
+- **Headers:** `Authorization: Bearer <jwt_token>`
+- **Response:** Task object
+
+#### Create Task (Admin Only)
+- **POST /tasks**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:**
+  ```json
+  {
     "title": "Task Title",
     "description": "Task Description",
-    "duedate": "2025-07-16T00:00:00Z",
+    "due_date": "2024-08-01T17:00:00Z",
     "status": "pending"
-  },
-  ...
-]
+  }
+  ```
+- **Response:** Created task
+
+#### Update Task (Admin Only)
+- **PUT /tasks/:id**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Request Body:** (same as create)
+- **Response:** Updated task
+
+#### Delete Task (Admin Only)
+- **DELETE /tasks/:id**
+- **Headers:** `Authorization: Bearer <admin_jwt_token>`
+- **Response:** Success message
+
+---
+
+## Roles
+- **admin:** Can create, update, delete tasks, and promote users.
+- **regular:** Can view tasks.
+
+---
+
+## Security
+- Passwords are hashed before storage.
+- JWT secret is stored in `.env` (not in version control).
+- All protected endpoints require JWT authentication.
+
+---
+
+## Setup & Usage
+1. **Clone the repo**
+2. **Create a `.env` file:**
+   ```
+   JWT_SECRET=your_super_secret_key
+   ```
+3. **Run the server:**
+   ```
+   go run main.go
+   ```
+4. **Use Postman or similar tool to test endpoints.**
+
+---
+
+## Example Authorization Header
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ---
-### 2. Get Task By ID
-**GET** `/tasks/{id}`
 
-**Request:**
-- Path parameter: `id` (integer)
-
-**Response:**
-- Status: 200 OK
-- Body: Task object
-- Status: 400 Bad Request (if ID is invalid)
-- Status: 404 Not Found (if task does not exist)
-
-```
-{
-  "id": 1,
-  "title": "Task Title",
-  "description": "Task Description",
-  "duedate": "2025-07-16T00:00:00Z",
-  "status": "pending"
-}
-```
-
----
-### 3. Create Task
+## Notes
+- First registered user becomes admin if no users exist.
+- Only admins can promote other users.
+- All errors are returned as JSON with an `error` field.
 
 **POST** `/tasks`
 

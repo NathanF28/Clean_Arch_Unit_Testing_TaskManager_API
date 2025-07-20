@@ -1,7 +1,7 @@
 package main
 
-import "task4/router"
-import "task4/data"
+import "task6/router"
+import "task6/data"
 
 func main() {
 	data.InitMongo()
