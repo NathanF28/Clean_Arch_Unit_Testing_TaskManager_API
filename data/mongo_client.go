@@ -8,11 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var MongoClient *mongo.Client
-var TaskCollection *mongo.Collection
-var UserCollection *mongo.Collection
-
-func InitMongo() {
+func InitMongo() (*mongo.Collection, *mongo.Collection) {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -22,7 +18,7 @@ func InitMongo() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	MongoClient = client
-	TaskCollection = client.Database("task_manager").Collection("tasks")
-	UserCollection = client.Database("task_manager").Collection("users")
+	taskCol := client.Database("task_manager").Collection("tasks")
+	userCol := client.Database("task_manager").Collection("users")
+	return userCol, taskCol
 }

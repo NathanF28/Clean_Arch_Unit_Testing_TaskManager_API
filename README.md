@@ -1,8 +1,36 @@
 
-# Task Management API
+
+# Task Management API (Clean Architecture)
 
 ## Overview
-This API provides endpoints for managing tasks and users, with authentication and authorization using JWT. Only authenticated users can access protected routes, and only admins can create, update, delete tasks or promote users.
+This API provides endpoints for managing tasks and users, with authentication and authorization using JWT. The project is structured according to Clean Architecture principles, ensuring clear separation of concerns, testability, and maintainability.
+
+**Key Clean Architecture Principles:**
+- **Separation of Concerns:** Each layer has a distinct responsibility (domain, use case, delivery, infrastructure).
+- **Dependency Inversion:** Core business logic depends on abstractions, not concrete implementations.
+- **Decoupling:** Domain models and use cases are independent of frameworks and external dependencies.
+- **Testability:** Interfaces and dependency injection allow for easy mocking and unit testing.
+
+**Codebase Structure:**
+```
+├── domain/         # Core business models (e.g., User, Task)
+├── usecases/       # Application logic (services, interactors)
+├── repository/     # Interfaces and implementations for data access
+│   ├── interfaces/ # Repository interfaces (abstractions)
+│   └── mongo/      # MongoDB implementations
+├── delivery/       # HTTP controllers and router
+├── data/           # Infrastructure (MongoDB client, etc.)
+├── docs/           # Documentation
+└── main.go         # Application entry point (wires dependencies)
+```
+
+**Design Decisions:**
+- All business logic is in the usecase layer, not in controllers or repositories.
+- Repositories are injected as interfaces, allowing for easy substitution and testing.
+- Controllers handle HTTP, validate input, and delegate to usecases.
+- Infrastructure (e.g., MongoDB) is abstracted behind interfaces.
+
+---
 
 ## Authentication
 All protected endpoints require a valid JWT token in the `Authorization` header:
@@ -11,11 +39,13 @@ All protected endpoints require a valid JWT token in the `Authorization` header:
 Authorization: Bearer <your_jwt_token>
 ```
 
+---
+
 ## Endpoints
 
 ### User Management
 
-#### Register User
+#### Register User (Public)
 - **POST /register**
 - **Request Body:**
   ```json
@@ -28,7 +58,7 @@ Authorization: Bearer <your_jwt_token>
   - `201 Created` on success
   - `400 Bad Request` if invalid or password < 8 chars
 
-#### Login User
+#### Login User (Public)
 - **POST /login**
 - **Request Body:**
   ```json
@@ -60,12 +90,12 @@ Authorization: Bearer <your_jwt_token>
 
 ### Task Management
 
-#### Get All Tasks
+#### Get All Tasks (Protected)
 - **GET /tasks**
 - **Headers:** `Authorization: Bearer <jwt_token>`
 - **Response:** List of tasks
 
-#### Get Task by ID
+#### Get Task by ID (Protected)
 - **GET /tasks/:id**
 - **Headers:** `Authorization: Bearer <jwt_token>`
 - **Response:** Task object
@@ -78,7 +108,7 @@ Authorization: Bearer <your_jwt_token>
   {
     "title": "Task Title",
     "description": "Task Description",
-    "due_date": "2024-08-01T17:00:00Z",
+    "duedate": "2024-08-01T17:00:00Z",
     "status": "pending"
   }
   ```
@@ -95,14 +125,20 @@ Authorization: Bearer <your_jwt_token>
 - **Headers:** `Authorization: Bearer <admin_jwt_token>`
 - **Response:** Success message
 
+---
+
 ## Roles
 - **admin:** Can create, update, delete tasks, and promote users.
 - **regular:** Can view tasks.
 
+---
+
 ## Security
-- Passwords are hashed before storage.
+- Passwords are hashed before storage (handled in usecase layer).
 - JWT secret is stored in `.env` (not in version control).
 - All protected endpoints require JWT authentication.
+
+---
 
 ## Setup & Usage
 1. **Clone the repo**
@@ -112,19 +148,57 @@ Authorization: Bearer <your_jwt_token>
    ```
 3. **Run the server:**
    ```
-   go run main.go
+   go run delivery/main.go
    ```
 4. **Use Postman or similar tool to test endpoints.**
+5. **Run unit tests:**
+   ```
+   go test ./...
+   ```
+
+---
 
 ## Example Authorization Header
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+---
+
 ## Notes
-- First registered user becomes admin if no users exist.
+- First registered user becomes admin if no users exist (handled in usecase layer).
 - Only admins can promote other users.
 - All errors are returned as JSON with an `error` field.
+
+---
+
+## Clean Architecture Guidelines & Testing
+
+- **Domain Layer:** Contains only business entities and logic, no dependencies on other layers.
+- **Usecase Layer:** Implements application-specific business rules, orchestrates domain logic, and is decoupled from frameworks and infrastructure.
+- **Repository Layer:** Defines interfaces for data access; concrete implementations (e.g., MongoDB) are injected via dependency inversion.
+- **Delivery Layer:** Handles HTTP requests, validates input, and delegates to usecases. No business logic here.
+- **Infrastructure Layer:** Contains external dependencies (e.g., database clients, middleware).
+
+**Testing:**
+- Unit tests are provided for usecases and repositories using mocks.
+- To run all tests:
+  ```
+  go test ./...
+  ```
+- Use dependency injection to substitute real implementations with mocks for testing.
+
+**Design Decisions:**
+- All dependencies flow inward (inversion of control).
+- No direct references to infrastructure in domain/usecase layers.
+- Controllers and routers are thin and only coordinate requests.
+
+**For future development:**
+- Add new features by defining interfaces in the repository layer and implementing them in infrastructure.
+- Keep business logic in usecases, not in controllers or repositories.
+- Write tests for all new usecases and repository implementations.
+
+---
 
 ## Contact
 For questions, contact the maintainer.

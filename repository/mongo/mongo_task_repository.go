@@ -1,30 +1,41 @@
-package data
+package repository
 
 import (
-	"context"
 	"fmt"
+	"context"
+	"task7/domain"
 	"log"
-	"task6/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// mongo db implementation of Task interface 
 
- 
+type MongoTaskRepository struct {         // one type of implementation
+	TaskCollection *mongo.Collection
+}
+
+// constructor 
+func NewMongoTaskRepository(taskCol *mongo.Collection) *MongoTaskRepository {   // create object for that
+	return &MongoTaskRepository{
+		TaskCollection : taskCol,
+	}
+}
 
 
-func GetAllTasks() ([]models.Task, error) {
-	var tasks []models.Task
+func (m *MongoTaskRepository) GetAllTasks() ([]domain.Task, error) {
+	var tasks []domain.Task
 
 	filter := bson.D{}
 
-	cursor, err := TaskCollection.Find(context.TODO(), filter)
+	cursor, err := m.TaskCollection.Find(context.TODO(), filter)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.TODO())
 
 	for cursor.Next(context.TODO()) {
-		var task models.Task
+		var task domain.Task
 		err := cursor.Decode(&task)
 		if err != nil {
 			log.Println("Error decoding task:", err)
@@ -40,28 +51,26 @@ func GetAllTasks() ([]models.Task, error) {
 	return tasks, nil
 }
 
-func GetTaskById(id int) (models.Task, error) {
+func (m *MongoTaskRepository) GetTaskById(id int) (domain.Task, error) {
 	filter := bson.M{"id": id}
 
-	var task models.Task
-	err := TaskCollection.FindOne(context.TODO(), filter).Decode(&task)
+	var task domain.Task
+	err := m.TaskCollection.FindOne(context.TODO(), filter).Decode(&task)
 	if err != nil {
-		return models.Task{}, err
+		return domain.Task{}, err
 	}
 	return task, nil
 }
 
-func CreateTask(newTask *models.Task) error {
-	// Check for required fields
+func (m *MongoTaskRepository) CreateTask(newTask *domain.Task) error {
 	if newTask.ID == 0 || newTask.Title == "" || newTask.Description == "" || newTask.Status == "" || newTask.DueDate.IsZero() {
-		fmt.Println("ooooooo",newTask)
 		return fmt.Errorf("missing required field(s) in newTask")
 	}
-	_, err := TaskCollection.InsertOne(context.TODO(), newTask)
+	_, err := m.TaskCollection.InsertOne(context.TODO(), newTask)
 	return err
 }
 
-func UpdateTask(id int, updatedTask *models.Task) error {
+func (m *MongoTaskRepository) UpdateTask(id int, updatedTask *domain.Task) error {
 	filter := bson.M{"id": id}
 
 	updateFields := bson.M{}
@@ -83,15 +92,15 @@ func UpdateTask(id int, updatedTask *models.Task) error {
 	}
 
 	update := bson.M{"$set": updateFields}
-	res, err := TaskCollection.UpdateOne(context.TODO(), filter, update)
+	res, err := m.TaskCollection.UpdateOne(context.TODO(), filter, update)
 	if res.MatchedCount == 0 || err != nil {
 		return fmt.Errorf("no task found with id %d", id)
 	}
 	return nil
 }
 
-func RemoveTasks(id int) error {
+func (m *MongoTaskRepository) DeleteTaskById(id int) error {
 	filter := bson.M{"id": id}
-	_, err := TaskCollection.DeleteOne(context.TODO(), filter)
+	_, err := m.TaskCollection.DeleteOne(context.TODO(), filter)
 	return err
 }

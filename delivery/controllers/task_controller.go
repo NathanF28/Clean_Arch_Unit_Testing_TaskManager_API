@@ -3,32 +3,24 @@ package controllers
 import (
 	"fmt"
 	"strconv"
-	"task6/data"
-	"task6/models"
+	"task7/domain"
+	services "task7/usecases"
 
 	"github.com/gin-gonic/gin"
 )
 
-func PromoteUser(c *gin.Context){
-	var req struct {
-		Username string `json:"username"`
-	}
- 	if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": "Invalid request"})
-        return
-    }
-	err := data.PromoteUser(req.Username)
-	if err != nil {
-        c.JSON(404, gin.H{"error": err.Error()})
-        return
-    }
-    c.JSON(200, gin.H{"message": "User promoted to admin"})
+type TaskController struct {
+	taskService services.TaskService
 }
 
+func NewTaskController(ts services.TaskService) *TaskController {
+	return &TaskController{
+		taskService: ts,
+	}
+}
 
-
-func GetTasks(c *gin.Context) {
-	tasks, err := data.GetAllTasks()
+func (t TaskController) GetAllTasks(c *gin.Context) {
+	tasks, err := t.taskService.GetAllTasks()
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Error getting documents"})
 		return
@@ -36,13 +28,13 @@ func GetTasks(c *gin.Context) {
 	c.JSON(200, tasks)
 }
 
-func GetTasksById(c *gin.Context) {
+func (t TaskController) GetTasksById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Invalid Task ID"})
 		return
 	}
-	task, err := data.GetTaskById(id)
+	task, err := t.taskService.GetTaskById(id)
 	if err != nil {
 		c.JSON(404, gin.H{"message": "Task not found"})
 		return
@@ -50,14 +42,14 @@ func GetTasksById(c *gin.Context) {
 	c.JSON(200, task)
 }
 
-func PostTasks(c *gin.Context) {
-	var newTask models.Task
+func (t TaskController) PostTasks(c *gin.Context) {
+	var newTask domain.Task
 	err := c.BindJSON(&newTask)
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Error binding JSON"})
 		return
 	}
-	err = data.CreateTask(&newTask)
+	err = t.taskService.CreateTask(&newTask)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, gin.H{"message": fmt.Sprintf("Error %v", err)})
@@ -66,19 +58,19 @@ func PostTasks(c *gin.Context) {
 	c.JSON(201, newTask)
 }
 
-func PutTasksById(c *gin.Context) {
+func (t TaskController) PutTasksById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Invalid Task ID"})
 		return
 	}
-	var updatedTask models.Task
+	var updatedTask domain.Task
 	err = c.BindJSON(&updatedTask)
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Error binding JSON"})
 		return
 	}
-	err = data.UpdateTask(id, &updatedTask)
+	err = t.taskService.UpdateTask(id, &updatedTask)
 	if err != nil {
 		c.JSON(404, gin.H{"message": "Error updating task"})
 		return
@@ -86,13 +78,13 @@ func PutTasksById(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Task updated successfully"})
 }
 
-func DeleteTaskById(c *gin.Context) {
+func (t TaskController) DeleteTaskById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(400, gin.H{"message": "Invalid Task ID"})
 		return
 	}
-	err = data.RemoveTasks(id)
+	err = t.taskService.DeleteTaskById(id)
 	if err != nil {
 		c.JSON(404, gin.H{"message": "Error deleting task"})
 		return
