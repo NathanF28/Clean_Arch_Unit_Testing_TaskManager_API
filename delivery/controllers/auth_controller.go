@@ -9,12 +9,14 @@ import (
 )
 
 type AuthController struct {
-	userService services.UserService
+	userService    services.UserService
+	tokenGenerator infrastructure.TokenGenerator
 }
 
-func NewAuthController(us services.UserService) *AuthController {
+func NewAuthController(us services.UserService, tg infrastructure.TokenGenerator) *AuthController {
 	return &AuthController{
-		userService: us,
+		userService:    us,
+		tokenGenerator: tg,
 	}
 }
 
@@ -54,7 +56,7 @@ func (a AuthController) LoginUser(c *gin.Context) {
 	}
 	// generate jwt token for user
 
-	token, err := infrastructure.GenerateJWT(user)
+	token, err := a.tokenGenerator.GenerateToken(&user)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Could not generate token"})
 		return

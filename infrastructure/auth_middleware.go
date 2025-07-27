@@ -8,6 +8,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+func GetJWTSecret() []byte {
+	return jwtSecret
+}
+
+func SetJWTSecret(secret []byte) {
+	jwtSecret = secret
+}
+
 func AdminAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, exists := c.Get("role")

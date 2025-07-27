@@ -1,27 +1,27 @@
-package repository
+package mongo
 
 import (
-	"fmt"
 	"context"
-	"task7/domain"
+	"fmt"
 	"log"
+	"task7/domain"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// mongo db implementation of Task interface 
+// mongo db implementation of Task interface
 
-type MongoTaskRepository struct {         // one type of implementation
+type MongoTaskRepository struct { // one type of implementation
 	TaskCollection *mongo.Collection
 }
 
-// constructor 
-func NewMongoTaskRepository(taskCol *mongo.Collection) *MongoTaskRepository {   // create object for that
+// constructor
+func NewMongoTaskRepository(taskCol *mongo.Collection) *MongoTaskRepository { // create object for that
 	return &MongoTaskRepository{
-		TaskCollection : taskCol,
+		TaskCollection: taskCol,
 	}
 }
-
 
 func (m *MongoTaskRepository) GetAllTasks() ([]domain.Task, error) {
 	var tasks []domain.Task
@@ -66,7 +66,14 @@ func (m *MongoTaskRepository) CreateTask(newTask *domain.Task) error {
 	if newTask.ID == 0 || newTask.Title == "" || newTask.Description == "" || newTask.Status == "" || newTask.DueDate.IsZero() {
 		return fmt.Errorf("missing required field(s) in newTask")
 	}
-	_, err := m.TaskCollection.InsertOne(context.TODO(), newTask)
+	filter := bson.M{"id": newTask.ID}
+	var tempTask domain.Task
+	err := m.TaskCollection.FindOne(context.TODO(), filter).Decode(&tempTask)
+	if err == nil {
+		return fmt.Errorf("id already exists")
+
+	}
+	_, err = m.TaskCollection.InsertOne(context.TODO(), newTask)
 	return err
 }
 
@@ -88,7 +95,7 @@ func (m *MongoTaskRepository) UpdateTask(id int, updatedTask *domain.Task) error
 	}
 
 	if len(updateFields) == 0 {
-		return nil // No fields to update
+		return nil
 	}
 
 	update := bson.M{"$set": updateFields}

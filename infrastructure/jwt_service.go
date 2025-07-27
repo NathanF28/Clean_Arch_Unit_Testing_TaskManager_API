@@ -15,7 +15,13 @@ func init() {
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
-func GenerateJWT(user domain.User) (string, error) {
+type JwtToken struct{}
+
+func NewJwtToken() *JwtToken {
+	return &JwtToken{}
+}
+
+func (j *JwtToken) GenerateToken(user *domain.User) (string, error) {
 	claims := jwt.MapClaims{
 		"username": user.Username,
 		"role":     user.Role,
