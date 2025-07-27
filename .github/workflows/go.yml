@@ -25,7 +25,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-          --health-start-period 10s # Give it some grace period at the start
+          --health-start-period 10s 
 
     steps:
       - name: Checkout code
