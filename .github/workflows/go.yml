@@ -25,10 +25,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
-          --health-start-period 10s
-          # IMPORTANT: The above line (10s) must be the last part of the string.
-          # Any comments about the options need to be outside this block,
-          # or on their own separate lines as YAML comments, not part of the `options` string.
+          --health-start-period 10s # Give it some grace period at the start
 
     steps:
       - name: Checkout code
