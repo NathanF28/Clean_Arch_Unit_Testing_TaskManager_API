@@ -2,7 +2,6 @@ package mongo_test
 
 import (
 	"context"
-	"fmt"
 	"task7/domain"
 	"task7/repository/mongo"
 	"testing"
@@ -51,11 +50,9 @@ func (s *MongoUserRepositorySuite) SetupSuite() {
 	})
 	s.Require().NoError(err, "Failed to create unique index on username")
 
-	fmt.Printf("Connected to local MongoDB. Using database: %s\n", s.databaseName)
 }
 
 func (s *MongoUserRepositorySuite) TearDownSuite() {
-	fmt.Println("----- Tearing down MongoUserRepositorySuite (Local MongoDB) -----")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -67,11 +64,9 @@ func (s *MongoUserRepositorySuite) TearDownSuite() {
 		err := s.mongoClient.Disconnect(ctx)
 		s.NoError(err, "Failed to disconnect MongoDB client")
 	}
-	fmt.Println("Local MongoDB connection closed and test database dropped.")
 }
 
 func (s *MongoUserRepositorySuite) SetupTest() {
-	fmt.Println("--- Clearing users collection before test ---")
 	_, err := s.userCollection.DeleteMany(context.Background(), bson.D{})
 	s.Require().NoError(err, "Failed to clear users collection")
 }

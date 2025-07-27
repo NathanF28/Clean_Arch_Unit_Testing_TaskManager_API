@@ -24,14 +24,12 @@ func (m *MockUserService) RegisterUser(user *domain.User) error {
 	return args.Error(0)
 }
 
-// *** FIX HERE: Correctly dereference the mock return value ***
 func (m *MockUserService) LoginUser(user *domain.User) (domain.User, error) {
 	args := m.Called(user)
 	if args.Get(0) == nil {
-		return domain.User{}, args.Error(1) // Return zero-value struct on nil/error
+		return domain.User{}, args.Error(1)
 	}
-	// Assert that the returned mock value is *domain.User, then dereference it
-	return *(args.Get(0).(*domain.User)), args.Error(1) // <-- CORRECTED LINE
+	return *(args.Get(0).(*domain.User)), args.Error(1)
 }
 
 func (m *MockUserService) PromoteUser(username string) error {
@@ -43,7 +41,6 @@ type MockTokenGenerator struct {
 	mock.Mock
 }
 
-// *** FIX HERE: This signature must match infrastructure.TokenGenerator interface (which is *domain.User) ***
 func (m *MockTokenGenerator) GenerateToken(user *domain.User) (string, error) { // <-- CORRECTED SIGNATURE
 	args := m.Called(user)
 	return args.String(0), args.Error(1)
@@ -71,8 +68,6 @@ func (s *AuthControllerTestSuite) SetupTest() {
 	s.mockUserService = new(MockUserService)
 	s.mockTokenGenerator = new(MockTokenGenerator)
 
-	// controllers.NewAuthController expects services.UserService and infrastructure.TokenGenerator
-	// Our mocks now correctly implement these interfaces.
 	s.authController = controllers.NewAuthController(s.mockUserService, s.mockTokenGenerator)
 }
 
@@ -151,21 +146,16 @@ func (s *AuthControllerTestSuite) TestLoginUser_Success() {
 	req.Header.Set("Content-Type", "application/json")
 	s.ginContext.Request = req
 
-	// authenticatedUser is a POINTER to domain.User, because that's what mockUserService.LoginUser
-	// is set up to return (and it will be dereferenced by the MockUserService.LoginUser method)
-	// and what TokenGenerator.GenerateToken expects.
-	authenticatedUserPtr := &domain.User{ // <-- This is a pointer
+	authenticatedUserPtr := &domain.User{
 		ID:           primitive.NewObjectID(),
 		Username:     "testuser",
 		PasswordHash: "hashed_password_from_db",
 		Role:         "user",
 	}
 
-	// Mock UserService: Expect LoginUser to be called, returning the authenticated user (POINTER) and no error.
 	s.mockUserService.On("LoginUser", mock.AnythingOfType("*domain.User")).Return(authenticatedUserPtr, nil).Once() // <-- Returns POINTER
 
 	expectedToken := "mock_jwt_token_for_user123"
-	// *** FIX HERE: TokenGenerator.GenerateToken expects *domain.User, so use *domain.User in mock.AnythingOfType ***
 	s.mockTokenGenerator.On("GenerateToken", mock.AnythingOfType("*domain.User")).Return(expectedToken, nil).Once() // <-- Expects POINTER
 
 	s.authController.LoginUser(s.ginContext)
@@ -197,7 +187,6 @@ func (s *AuthControllerTestSuite) TestLoginUser_AuthenticationFailed() {
 	s.ginContext.Request = req
 
 	authError := errors.New("username or password mismatch")
-	// Return nil for the user, as login failed.
 	s.mockUserService.On("LoginUser", mock.AnythingOfType("*domain.User")).Return(nil, authError).Once()
 
 	s.authController.LoginUser(s.ginContext)
@@ -214,19 +203,16 @@ func (s *AuthControllerTestSuite) TestLoginUser_TokenGenerationFailed() {
 	req.Header.Set("Content-Type", "application/json")
 	s.ginContext.Request = req
 
-	// authenticatedUser is a POINTER to domain.User
-	authenticatedUserPtr := &domain.User{ // <-- This is a pointer
+	authenticatedUserPtr := &domain.User{
 		ID:           primitive.NewObjectID(),
 		Username:     "testuser",
 		PasswordHash: "hashed_password",
 		Role:         "user",
 	}
 
-	// Mock UserService: Simulate successful login, returning a domain.User pointer.
 	s.mockUserService.On("LoginUser", mock.AnythingOfType("*domain.User")).Return(authenticatedUserPtr, nil).Once() // <-- Returns POINTER
 
 	tokenGenError := errors.New("internal server error during token signing")
-	// *** FIX HERE: TokenGenerator.GenerateToken expects *domain.User, so use *domain.User in mock.AnythingOfType ***
 	s.mockTokenGenerator.On("GenerateToken", mock.AnythingOfType("*domain.User")).Return("", tokenGenError).Once() // <-- Expects POINTER
 
 	s.authController.LoginUser(s.ginContext)

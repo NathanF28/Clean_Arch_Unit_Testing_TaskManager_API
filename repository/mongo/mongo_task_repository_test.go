@@ -2,7 +2,6 @@ package mongo_test
 
 import (
 	"context"
-	"fmt"
 	"task7/domain"
 	"task7/repository/mongo"
 	"testing"
@@ -49,8 +48,6 @@ func (s *TaskRepositorySuite) SetupSuite() {
 		Options: options.Index().SetUnique(true),
 	})
 	s.Require().NoError(err, "Failed to create unique index on task ID")
-
- 
 }
 
 func (s *TaskRepositorySuite) TearDownSuite() {
@@ -66,7 +63,6 @@ func (s *TaskRepositorySuite) TearDownSuite() {
 		err := s.mongoClient.Disconnect(ctx)
 		s.NoError(err, "Failed to disconnect MongoDB client")
 	}
- 
 }
 
 func (s *TaskRepositorySuite) SetupTest() {

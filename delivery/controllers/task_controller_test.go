@@ -92,8 +92,8 @@ func (s *TaskControllerSuite) TestGetAllTasks_SuccessWithTasks() {
 	const timePrecision = time.Millisecond
 
 	expectedTasks := []domain.Task{
-		{ID: 1, Title: "Task 1", Description: "Desc 1", DueDate: time.Now().Truncate(timePrecision), Status: "pending"},
-		{ID: 2, Title: "Task 2", Description: "Desc 2", DueDate: time.Now().Truncate(timePrecision), Status: "completed"},
+		{ID: 1, Title: "Task 1", Description: "Desc 1", DueDate: time.Now().UTC().Truncate(timePrecision), Status: "pending"},
+		{ID: 2, Title: "Task 2", Description: "Desc 2", DueDate: time.Now().UTC().Truncate(timePrecision), Status: "completed"},
 	}
 
 	s.mockTaskService.On("GetAllTasks").Return(expectedTasks, nil).Once()
@@ -106,7 +106,7 @@ func (s *TaskControllerSuite) TestGetAllTasks_SuccessWithTasks() {
 	s.NoError(err)
 
 	for i := range tasks {
-		tasks[i].DueDate = tasks[i].DueDate.Truncate(timePrecision)
+		tasks[i].DueDate = tasks[i].DueDate.UTC().Truncate(timePrecision)
 	}
 
 	s.Equal(expectedTasks, tasks)
@@ -142,7 +142,7 @@ func (s *TaskControllerSuite) TestGetAllTasks_ServiceError() {
 
 func (s *TaskControllerSuite) TestGetTasksById_Success() {
 	const timePrecision = time.Millisecond
-	expectedTask := domain.Task{ID: 1, Title: "Test Task", Description: "Desc", DueDate: time.Now().Truncate(timePrecision), Status: "pending"}
+	expectedTask := domain.Task{ID: 1, Title: "Test Task", Description: "Desc", DueDate: time.Now().UTC().Truncate(timePrecision), Status: "pending"}
 
 	s.mockTaskService.On("GetTaskById", 1).Return(expectedTask, nil).Once()
 
@@ -152,7 +152,7 @@ func (s *TaskControllerSuite) TestGetTasksById_Success() {
 	var task domain.Task
 	err := json.Unmarshal(w.Body.Bytes(), &task)
 	s.NoError(err)
-	task.DueDate = task.DueDate.Truncate(timePrecision)
+	task.DueDate = task.DueDate.UTC().Truncate(timePrecision)
 	s.Equal(expectedTask, task)
 	s.mockTaskService.AssertExpectations(s.T())
 }
@@ -179,7 +179,7 @@ func (s *TaskControllerSuite) TestGetTasksById_NotFound() {
 
 func (s *TaskControllerSuite) TestPostTasks_Success() {
 	const timePrecision = time.Millisecond
-	newTask := domain.Task{Title: "New Task", Description: "Details", DueDate: time.Now().Add(24 * time.Hour).Truncate(timePrecision), Status: "pending"}
+	newTask := domain.Task{Title: "New Task", Description: "Details", DueDate: time.Now().UTC().Add(24 * time.Hour).Truncate(timePrecision), Status: "pending"}
 
 	s.mockTaskService.On("CreateTask", mock.AnythingOfType("*domain.Task")).Return(nil).Once()
 
@@ -190,13 +190,12 @@ func (s *TaskControllerSuite) TestPostTasks_Success() {
 	err := json.Unmarshal(w.Body.Bytes(), &createdTask)
 	s.NoError(err)
 
-	createdTask.DueDate = createdTask.DueDate.Truncate(timePrecision)
-	newTask.ID = createdTask.ID // Assume ID is set by the service/DB, so match it for comparison
+	createdTask.DueDate = createdTask.DueDate.UTC().Truncate(timePrecision)
+	newTask.ID = createdTask.ID
 	s.Equal(newTask.Title, createdTask.Title)
 	s.Equal(newTask.Description, createdTask.Description)
 	s.Equal(newTask.Status, createdTask.Status)
-	s.Equal(newTask.DueDate, createdTask.DueDate) // Now compare DueDate directly after truncation
-
+	s.Equal(newTask.DueDate, createdTask.DueDate)
 	s.mockTaskService.AssertExpectations(s.T())
 }
 
@@ -223,7 +222,7 @@ func (s *TaskControllerSuite) TestPostTasks_ServiceError() {
 
 func (s *TaskControllerSuite) TestPutTasksById_Success() {
 	const timePrecision = time.Millisecond
-	updatedTask := domain.Task{ID: 1, Title: "Updated Task", Description: "New Desc", DueDate: time.Now().Truncate(timePrecision), Status: "completed"}
+	updatedTask := domain.Task{ID: 1, Title: "Updated Task", Description: "New Desc", DueDate: time.Now().UTC().Truncate(timePrecision), Status: "completed"}
 
 	s.mockTaskService.On("UpdateTask", 1, mock.AnythingOfType("*domain.Task")).Return(nil).Once()
 
