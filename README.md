@@ -24,13 +24,20 @@ This API provides endpoints for managing tasks and users, with authentication an
 └── main.go         # Application entry point (wires dependencies)
 ```
 
-**Design Decisions:**
-- All business logic is in the usecase layer, not in controllers or repositories.
-- Repositories are injected as interfaces, allowing for easy substitution and testing.
-- Controllers handle HTTP, validate input, and delegate to usecases.
-- Infrastructure (e.g., MongoDB) is abstracted behind interfaces.
 
 ---
+
+## Unit Testing & CI
+
+This project uses Go's built-in testing framework and [testify](https://github.com/stretchr/testify) for unit and integration tests. Repository tests use a real MongoDB instance. All tests are run automatically on every push and pull request via GitHub Actions.
+
+- See [docs/unit_testing.md](docs/unit_testing.md) for a full guide on running, writing, and troubleshooting tests.
+- The CI workflow is defined in `.github/workflows/go.yml` and spins up a MongoDB service for integration tests.
+
+To run all tests locally:
+```sh
+go test ./...
+```
 
 ## Authentication
 All protected endpoints require a valid JWT token in the `Authorization` header:
